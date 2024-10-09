@@ -1,21 +1,23 @@
+// app/recreate/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { client } from "@/sanity/lib/client"; // Import Sanity client
-import { faceComponentModuleQuery } from "@/lib/queries"; // Import your GROQ query
+import { client } from "@/sanity/lib/client";
+import { faceComponentModuleQuery } from "@/lib/queries";
 import FacePreview from "@/components/components/FacePreview";
 import Image from "next/image";
-import { v4 as uuidv4 } from "uuid"; // Import uuid
-import { useRouter } from "next/navigation"; // Import useRouter
+import { v4 as uuidv4 } from "uuid";
+import { useRouter } from "next/navigation";
+import { useFaceContext } from "@/context/FaceContext"; // Import the custom hook
+import { Card } from "@/components/ui/card";
 
 // Image imports (Static fillers)
 import e1 from "@/app/images/fillers/eyes/1.png";
@@ -35,7 +37,7 @@ interface SanityImage {
 
 // Static options for eyes, nose, and mouth with UUID
 const staticEyesOptions = [
-  { id: uuidv4(), url: e1.src, label: "Eyes 1" }, // Convert StaticImageData to string using .src
+  { id: uuidv4(), url: e1.src, label: "Eyes 1" },
   { id: uuidv4(), url: e2.src, label: "Eyes 2" },
 ];
 
@@ -50,15 +52,12 @@ const staticMouthOptions = [
 ];
 
 const RecreatePage: React.FC = () => {
-  const [selectedEyes, setSelectedEyes] = useState<string | null>(null);
-  const [selectedNose, setSelectedNose] = useState<string | null>(null);
-  const [selectedMouth, setSelectedMouth] = useState<string | null>(null);
-
+  const { selections, setSelections, setCorrectComponents } = useFaceContext(); // Use context
   const [eyesOptions, setEyesOptions] = useState(staticEyesOptions);
   const [nosesOptions, setNosesOptions] = useState(staticNoseOptions);
   const [mouthOptions, setMouthOptions] = useState(staticMouthOptions);
 
-  const router = useRouter(); // Use Next.js router
+  const router = useRouter();
 
   // Fetch face components from Sanity
   useEffect(() => {
@@ -66,21 +65,74 @@ const RecreatePage: React.FC = () => {
       try {
         const result = await client.fetch(faceComponentModuleQuery);
 
-        const sanityEyes = result[0].faceComponents?.eyes.map(
+        const faceCreate = result[0];
+        if (!faceCreate) {
+          throw new Error("No faceCreate document found.");
+        }
+
+        // Extract correct components from targetFace
+        // Since the schema doesn't specify which components make up the targetFace,
+        // we'll assume that the first component in each category is correct for simplicity
+        // Adjust this logic based on your actual data associations
+
+        const target = faceCreate.targets[0];
+        if (!target) {
+          throw new Error("No target found in faceCreate.");
+        }
+
+        // Assume that the correct components are the ones associated with the correct lineup face
+        // Find the lineupFace marked as correct
+        const correctLineupFace = target.lineupFaces.find(
+          (face: any) => face.correct
+        );
+        if (!correctLineupFace) {
+          throw new Error("No correct lineup face marked in Sanity.");
+        }
+
+        // Now, we need to determine which components make up the correct lineup face
+        // This requires a mapping between the lineup face and its components
+        // Since the schema doesn't provide this, we'll assume that the correct lineup face's components match the first components
+
+        // For demonstration, let's map the correct lineup face to specific components
+        // Adjust this based on your actual data structure or naming conventions
+
+        // Example mapping (you need to adjust this)
+        const correctFaceId = correctLineupFace.image.asset._ref;
+
+        // Fetch correct components based on correctFaceId
+        // Since we don't have a direct link, we'll make an assumption
+        // For example, map the correct face to the first component in each category
+
+        const correctEyesId =
+          faceCreate.faceComponents.eyes[0]?.asset._id || null;
+        const correctNoseId =
+          faceCreate.faceComponents.noses[0]?.asset._id || null;
+        const correctMouthId =
+          faceCreate.faceComponents.mouths[0]?.asset._id || null;
+
+        setCorrectComponents({
+          eyes: correctEyesId,
+          nose: correctNoseId,
+          mouth: correctMouthId,
+        });
+
+        const sanityEyes = faceCreate.faceComponents?.eyes.map(
           (item: SanityImage) => ({
             id: item.asset._id, // Use Sanity UUID as the id
             url: item.asset.url,
             label: "Sanity Eye",
           })
         );
-        const sanityNoses = result[0].faceComponents?.noses.map(
+
+        const sanityNoses = faceCreate.faceComponents?.noses.map(
           (item: SanityImage) => ({
             id: item.asset._id, // Use Sanity UUID as the id
             url: item.asset.url,
             label: "Sanity Nose",
           })
         );
-        const sanityMouths = result[0].faceComponents?.mouths.map(
+
+        const sanityMouths = faceCreate.faceComponents?.mouths.map(
           (item: SanityImage) => ({
             id: item.asset._id, // Use Sanity UUID as the id
             url: item.asset.url,
@@ -100,25 +152,27 @@ const RecreatePage: React.FC = () => {
             () => Math.random() - 0.5
           )
         );
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to fetch face components:", err);
+        alert(err.message || "Failed to fetch face components.");
       }
     };
 
     fetchFaceComponents();
-  }, []);
+  }, [setCorrectComponents]);
 
-  // Save selected UUIDs to cookies and redirect
+  // Save selected UUIDs to context and redirect
   const handleSave = () => {
-    // Use cookies from Next.js
-    document.cookie = `selectedEyes=${selectedEyes || ""}; path=/`;
-    document.cookie = `selectedNose=${selectedNose || ""}; path=/`;
-    document.cookie = `selectedMouth=${selectedMouth || ""}; path=/`;
+    // Ensure all selections are made
+    if (!selections.eyes || !selections.nose || !selections.mouth) {
+      alert("Please select eyes, nose, and mouth.");
+      return;
+    }
 
     // Redirect to lineup page
     const currentPath = window.location.pathname;
     const newPath = currentPath.replace("/recreate", "/lineup");
-    router.push(newPath); // Redirect to the lineup page
+    router.push(newPath);
   };
 
   return (
@@ -143,9 +197,11 @@ const RecreatePage: React.FC = () => {
                   {eyesOptions.map((option) => (
                     <div
                       key={option.id}
-                      onClick={() => setSelectedEyes(option.id)} // Save the UUID in state
+                      onClick={() =>
+                        setSelections({ ...selections, eyes: option.id })
+                      }
                       className={`cursor-pointer p-1 rounded-md transition-all duration-200 ease-in-out ${
-                        selectedEyes === option.id
+                        selections.eyes === option.id
                           ? "ring-2 ring-blue-500 shadow-lg"
                           : "hover:ring-2 hover:ring-gray-300"
                       }`}
@@ -155,7 +211,7 @@ const RecreatePage: React.FC = () => {
                         height={300}
                         src={option.url}
                         alt={option.label}
-                        className="object-cover w-full h-auto rounded-md"
+                        className="object-cover w-full h-auto rounded-md grayscale"
                       />
                     </div>
                   ))}
@@ -173,9 +229,11 @@ const RecreatePage: React.FC = () => {
                   {nosesOptions.map((option) => (
                     <div
                       key={option.id}
-                      onClick={() => setSelectedNose(option.id)} // Save the UUID in state
+                      onClick={() =>
+                        setSelections({ ...selections, nose: option.id })
+                      }
                       className={`cursor-pointer p-1 rounded-md transition-all duration-200 ease-in-out ${
-                        selectedNose === option.id
+                        selections.nose === option.id
                           ? "ring-2 ring-blue-500 shadow-lg"
                           : "hover:ring-2 hover:ring-gray-300"
                       }`}
@@ -185,7 +243,7 @@ const RecreatePage: React.FC = () => {
                         height={300}
                         src={option.url}
                         alt={option.label}
-                        className="object-cover w-full h-auto rounded-md"
+                        className="object-cover w-full h-auto rounded-md grayscale"
                       />
                     </div>
                   ))}
@@ -203,9 +261,11 @@ const RecreatePage: React.FC = () => {
                   {mouthOptions.map((option) => (
                     <div
                       key={option.id}
-                      onClick={() => setSelectedMouth(option.id)} // Save the UUID in state
+                      onClick={() =>
+                        setSelections({ ...selections, mouth: option.id })
+                      }
                       className={`cursor-pointer p-1 rounded-md transition-all duration-200 ease-in-out ${
-                        selectedMouth === option.id
+                        selections.mouth === option.id
                           ? "ring-2 ring-blue-500 shadow-lg"
                           : "hover:ring-2 hover:ring-gray-300"
                       }`}
@@ -215,7 +275,7 @@ const RecreatePage: React.FC = () => {
                         height={300}
                         src={option.url}
                         alt={option.label}
-                        className="object-cover w-full h-auto rounded-md"
+                        className="object-cover w-full h-auto rounded-md grayscale"
                       />
                     </div>
                   ))}
@@ -227,9 +287,9 @@ const RecreatePage: React.FC = () => {
           {/* Save Button */}
           <Button
             className="w-full text-xl py-3 rounded-lg transition-transform transform hover:scale-105 mt-6"
-            onClick={handleSave} // Save the selected UUIDs to cookies and redirect
+            onClick={handleSave} // Save the selected UUIDs to context and redirect
           >
-            Go to lineup
+            Go to Lineup
           </Button>
         </div>
 
@@ -239,18 +299,18 @@ const RecreatePage: React.FC = () => {
             <div className="dark:bg-grid-white/[0.16] bg-grid-black/[0.16] rounded-lg">
               <FacePreview
                 eyes={
-                  selectedEyes
-                    ? eyesOptions.find((e) => e.id === selectedEyes)?.url
+                  selections.eyes
+                    ? eyesOptions.find((e) => e.id === selections.eyes)?.url
                     : null
                 }
                 nose={
-                  selectedNose
-                    ? nosesOptions.find((n) => n.id === selectedNose)?.url
+                  selections.nose
+                    ? nosesOptions.find((n) => n.id === selections.nose)?.url
                     : null
                 }
                 mouth={
-                  selectedMouth
-                    ? mouthOptions.find((m) => m.id === selectedMouth)?.url
+                  selections.mouth
+                    ? mouthOptions.find((m) => m.id === selections.mouth)?.url
                     : null
                 }
               />

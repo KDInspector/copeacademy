@@ -87,7 +87,6 @@ const FaceRecreatePage = () => {
           }
         );
         const createdDate = new Date(fetchedCourse.createdAt);
-        console.log(fetchedCourse);
 
         setFormattedDate(createdDate.toLocaleDateString());
         setCourse(fetchedCourse);

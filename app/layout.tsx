@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PrelineScript from "@/components/PrelineScript";
 import { ThemeProvider } from "next-themes";
+import { FaceProvider } from "@/context/FaceContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,12 +34,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider disableTransitionOnChange>
-          <Navbar />
-          <div className="h-auto w-full dark:bg-black bg-white  dark:bg-dot-white/[0.16] bg-dot-black/[0.16] relative flex items-center justify-center">
-            {/* Radial gradient for the container to give a faded look */}
-            {children}
-          </div>
-          <Footer />
+          <FaceProvider>
+            <Navbar />
+            <div className="h-auto w-full dark:bg-black bg-white  dark:bg-dot-white/[0.16] bg-dot-black/[0.16] relative flex items-center justify-center">
+              {/* Radial gradient for the container to give a faded look */}
+              {children}
+            </div>
+            <Footer />
+          </FaceProvider>
         </ThemeProvider>
       </body>
       <PrelineScript />

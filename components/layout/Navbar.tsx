@@ -44,6 +44,7 @@ const Navbar = () => {
                 src={COPE}
                 alt="COPE"
                 className="w-28 h-auto dark:hidden block"
+                priority
               />
               <Image
                 src={COPEDark}

@@ -24,164 +24,7 @@ export const allCoursesQuery = groq`
     slug,
     createdAt,
     updatedAt,
-    courseType,
-    "faceCreateModule": faceCreateModule->{
-      _id,
-      moduleVideo{
-        videoType,
-        videoURL,
-        uploadedVideo{
-          asset->{
-            _id,
-            url
-          }
-        }
-      },
-      targets[]{
-        targetFace{
-          asset->{
-            _id,
-            url
-          }
-        },
-        lineupFaces[]{
-          asset->{
-            _id,
-            url
-          }
-        }
-      },
-      instruction
-    },
-    "lessons": *[_type == "lesson" && course._ref == ^._id]{
-      _id,
-      title,
-      description,
-      duration,
-      videoURL,
-      order,
-      lessonType,
-      faceCreateModule->{
-        _id,
-        moduleVideo{
-          videoType,
-          videoURL,
-          uploadedVideo{
-            asset->{
-              _id,
-              url
-            }
-          }
-        },
-        targets[]{
-          targetFace{
-            asset->{
-              _id,
-              url
-            }
-          },
-          lineupFaces[]{
-            asset->{
-              _id,
-              url
-            }
-          }
-        },
-        instruction
-      }
-    } | order(order asc)
   } | order(createdAt desc)
-`;
-
-export const singleCourseQuery = groq`
-  *[_type == "course" && slug.current == $slug][0]{
-    _id,
-    title,
-    description,
-    accessLevel,
-    duration,
-    previewImage{
-      asset->{
-        _id,
-        url,
-        metadata {
-          dimensions,
-          lqip,
-          palette
-        }
-      },
-      alt
-    },
-    slug,
-    createdAt,
-    updatedAt,
-    courseType,
-    "faceCreateModule": faceCreateModule->{
-      _id,
-      moduleVideo{
-        videoType,
-        videoURL,
-        uploadedVideo{
-          asset->{
-            _id,
-            url
-          }
-        }
-      },
-      targets[]{
-        targetFace{
-          asset->{
-            _id,
-            url
-          }
-        },
-        lineupFaces[]{
-          asset->{
-            _id,
-            url
-          }
-        }
-      },
-      instruction
-    },
-    "lessons": *[_type == "lesson" && course._ref == ^._id]{
-      _id,
-      title,
-      description,
-      duration,
-      videoURL,
-      order,
-      lessonType,
-      faceCreateModule->{
-        _id,
-        moduleVideo{
-          videoType,
-          videoURL,
-          uploadedVideo{
-            asset->{
-              _id,
-              url
-            }
-          }
-        },
-        targets[]{
-          targetFace{
-            asset->{
-              _id,
-              url
-            }
-          },
-          lineupFaces[]{
-            asset->{
-              _id,
-              url
-            }
-          }
-        },
-        instruction
-      }
-    } | order(order asc)
-  }
 `;
 
 export const faceCreateCourseQuery = groq`
@@ -199,7 +42,6 @@ export const faceCreateCourseQuery = groq`
   accessLevel,
   slug,
   description,
-  courseType,
   "faceCreateModule": faceCreateModule->{
     _id,
     title,
@@ -249,24 +91,43 @@ export const faceCreateModuleQuery = groq`
 
 export const faceComponentModuleQuery = groq`
   *[_type == "faceCreate"]{
+    _id,
+    title,
     faceComponents{
-      eyes[] {
+      eyes[]{
         asset->{
-          _id, 
+          _id,
           url
         }
       },
-      noses[] {
+      noses[]{
         asset->{
-          _id, 
+          _id,
           url
         }
       },
-      mouths[] {
+      mouths[]{
         asset->{
-          _id, 
+          _id,
           url
         }
+      }
+    },
+    targets[]{
+      targetFace{
+        asset->{
+          _ref,
+          url
+        }
+      },
+      lineupFaces[]{
+        image{
+          asset->{
+            _ref,
+            url
+          }
+        },
+        correct
       }
     }
   }

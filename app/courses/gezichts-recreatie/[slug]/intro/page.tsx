@@ -66,7 +66,6 @@ const ModulePage = () => {
             id: slug, // Pass 'slug' as the 'id' parameter
           }
         );
-        console.log("Fetched Module:", fetchedModule);
         setModule(fetchedModule);
 
         // Determine the video URL based on videoType
@@ -142,7 +141,6 @@ const ModulePage = () => {
             <ReactPlayer
               url={videoURL}
               playing
-              muted
               controls={false}
               onEnded={handleVideoEnd}
               width="100%"
