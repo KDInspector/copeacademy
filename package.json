@@ -36,7 +36,7 @@
     "react-dom": "^18",
     "react-player": "^2.16.0",
     "react-use": "^17.5.1",
-    "sanity": "^3.59.0",
+    "sanity": "^3.60.0",
     "sharp": "^0.33.5",
     "styled-components": "^6.1.13",
     "tailwind-merge": "^2.5.2",
@@ -47,10 +47,17 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.8.1",
+    "@typescript-eslint/parser": "^8.8.1",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.15",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.0",
+    "inflight": "^1.0.6"
   }
 }
